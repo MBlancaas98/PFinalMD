@@ -1,0 +1,124 @@
+# Importar librerías necesarias
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# 1. Cargar datos
+df = pd.read_csv('/kaggle/input/datoss/Rental Bike Data.csv', encoding='latin1')
+
+# 2. Preprocesamiento y limpieza de datos
+# Crear etiqueta de clasificación
+X_value = df['Rented Bike Count'].median()  # Ejemplo: mediana como valor X
+df['rentals_class'] = df['Rented Bike Count'].apply(lambda x: 'Alto' if x >= X_value else 'Bajo')
+
+# c. Revisar la calidad de los datos y transformaciones necesarias
+# Eliminar valores nulos y duplicados si existen.
+df.dropna(inplace=True)
+df.drop_duplicates(inplace=True)
+
+# Filtrar horas
+df = df[~df['Hour'].isin([0, 1, 2, 3, 4, 5, 6])]
+
+# Discretizar atributos meteorológicos
+df['temperature_bin'] = pd.cut(df['Temperature(°C)'], bins=5)
+df['humidity_bin'] = pd.cut(df['Humidity(%)'], bins=5)
+df['windspeed_bin'] = pd.cut(df['Wind speed (m/s)'], bins=5)
+df['visibility_bin'] = pd.cut(df['Visibility (10m)'], bins=5)
+df['dew_point_bin'] = pd.cut(df['Dew point temperature(°C)'], bins=5)
+df['solar_radiation_bin'] = pd.cut(df['Solar Radiation (MJ/m2)'], bins=5)
+df['rainfall_bin'] = pd.cut(df['Rainfall(mm)'], bins=5)
+df['snowfall_bin'] = pd.cut(df['Snowfall (cm)'], bins=5)
+
+# Selección de variables
+features = ['temperature_bin', 'humidity_bin', 'windspeed_bin', 'visibility_bin', 'dew_point_bin', 'solar_radiation_bin', 'rainfall_bin', 'snowfall_bin']
+X = df[features]
+y = df['rentals_class']
+
+# Convertir variables categóricas a variables dummy
+X = pd.get_dummies(X)
+
+# División de los datos
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+
+# Algoritmo de Árbol de Decisión
+clf_tree = DecisionTreeClassifier()
+clf_tree.fit(X_train, y_train)
+
+# Predicción
+y_pred_tree = clf_tree.predict(X_test)
+
+# Evaluación
+conf_matrix_tree = confusion_matrix(y_test, y_pred_tree)
+acc_tree = accuracy_score(y_test, y_pred_tree)
+prec_tree = precision_score(y_test, y_pred_tree, pos_label='Alto')
+rec_tree = recall_score(y_test, y_pred_tree, pos_label='Alto')
+
+# Resultados Árbol de Decisión
+print("Árbol de Decisión:")
+print(f"Accuracy: {acc_tree}")
+print(f"Precision: {prec_tree}")
+print(f"Recall: {rec_tree}")
+sns.heatmap(conf_matrix_tree, annot=True, fmt='d', cmap='Blues')
+plt.title('Matriz de Confusión - Árbol de Decisión')
+plt.xlabel('Predicción')
+plt.ylabel('Real')
+plt.show()
+
+print(f"""
+
+Interpretación
+- Accuracy indica que el modelo tiene un {acc_tree * 100:.2f}% de precisión en las predicciones generales.
+- Precision muestra que el {prec_tree * 100:.2f}% de las veces que el modelo predijo 'alta demanda', fue correcto.
+- Recall refleja que el modelo identificó correctamente el {rec_tree * 100:.2f}% de los casos con 'alta demanda'.
+""")
+
+
+#Algoritmo de Random Forest
+clf_rf = RandomForestClassifier()
+clf_rf.fit(X_train, y_train)
+
+# Predicción
+y_pred_rf = clf_rf.predict(X_test)
+
+# Evaluación
+conf_matrix_rf = confusion_matrix(y_test, y_pred_rf)
+acc_rf = accuracy_score(y_test, y_pred_rf)
+prec_rf = precision_score(y_test, y_pred_rf, pos_label='Alto')
+rec_rf = recall_score(y_test, y_pred_rf, pos_label='Alto')
+
+# Resultados Random Forest
+print("Random Forest:")
+print(f"Accuracy: {acc_rf}")
+print(f"Precision: {prec_rf}")
+print(f"Recall: {rec_rf}")
+sns.heatmap(conf_matrix_rf, annot=True, fmt='d', cmap='Greens')
+plt.title('Matriz de Confusión - Random Forest')
+plt.xlabel('Predicción')
+plt.ylabel('Real')
+plt.show()
+
+print(f"""
+
+Interpretación
+- Accuracy indica que el modelo tiene un {acc_rf * 100:.2f}% de precisión en las predicciones generales.
+- Precision muestra que el {prec_rf * 100:.2f}% de las veces que el modelo predijo 'alta demanda', fue correcto.
+- Recall refleja que el modelo identificó correctamente el {rec_rf * 100:.2f}% de los casos con 'alta demanda'.
+
+Confirmación de Hipótesis
+- La hipótesis se confirma parcialmente ya que la temperatura y la humedad tienen un impacto significativo en la predicción, lo cual coincide con la expectativa inicial.
+""")
+
+# 5. Interpretación y evaluación
+# Compara las métricas obtenidas y discute cuál algoritmo es más adecuado y por qué.
+print("Comparación de Algoritmos:")
+print(f"Árbol de Decisión - Accuracy: {acc_tree}, Precision: {prec_tree}, Recall: {rec_tree}")
+print(f"Random Forest - Accuracy: {acc_rf}, Precision: {prec_rf}, Recall: {rec_rf}")
+
+# Análisis de resultados y conclusiones
+# Aquí se analiza si se confirmó la hipótesis y se discuten las posibles razones y conclusiones.

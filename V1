@@ -1,0 +1,28 @@
+import pandas as pd
+import csv
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+
+# 1. Identificar el Universo de Datos
+# a. Cargar el archivo de Excel
+data = pd.read_csv("/kaggle/input/datoss/Rental Bike Data.csv", encoding = "latin-1", sep = ",")
+
+# 2. Establecer una hipótesis sobre el análisis y resultados esperados
+# Hipótesis: "La cantidad de bicicletas rentadas está significativamente influenciada por la temperatura y la humedad."
+
+# 3. Seleccionar los Datos sobre los que se Trabajará
+# a. Determinar si se trabajará sobre el conjunto completo de datos o un subconjunto
+# Trabajaremos con el conjunto completo, pero haremos un análisis de correlación para seleccionar las variables.
+
+#Convertimos algunas de las varibles catefóricas a numéricas
+
+pre_df = pd.get_dummies(data,columns=['Date','Seasons','Holiday','Functioning Day'],drop_first=False)
+pre_df.head()
+
+# Analizar la correlación entre las variables
+correlation_matrix = pre_df.corr()
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.show()
